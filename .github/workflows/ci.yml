@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pesado:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: ShellCheck
+        run: shellcheck pesado/*.sh
+      - name: Pruebas de la fila y el semáforo
+        run: bash pesado/probar.sh
