@@ -16,6 +16,12 @@ presion() {
   printf 'some avg10=0.00 avg60=%s.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n' "$1" >"$SEMAFORO_PSI_DIR/cpu"
   printf 'some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=%s.00 avg300=0.00 total=0\n' "$2" >"$SEMAFORO_PSI_DIR/memory"
   printf 'MemTotal:       16000000 kB\nMemAvailable:   %s kB\n' "$(($3 * 1024))" >"$SEMAFORO_MEMINFO"
+  # 4.º argumento opcional: disco «full» avg60. Sin él, no hay fichero io (núcleos que no lo dan).
+  if [ -n "${4:-}" ]; then
+    printf 'some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=%s.00 avg300=0.00 total=0\n' "$4" >"$SEMAFORO_PSI_DIR/io"
+  else
+    rm -f "$SEMAFORO_PSI_DIR/io"
+  fi
 }
 
 fallos=0
@@ -34,6 +40,12 @@ umbral_configurable() { presion 55 0 8000; SEMAFORO_CPU_MAX=60 "$aqui/semaforo.s
 sin_psi_no_adivina() { SEMAFORO_PSI_DIR="$tmp/no-existe" "$aqui/semaforo.sh" 2>/dev/null; [ $? -eq 2 ]; }
 prueba "semáforo en verde con la máquina libre" verde
 prueba "semáforo en rojo por presión de CPU" rojo_cpu
+rojo_io() { presion 0 0 8000 75; ! "$aqui/semaforo.sh" 2>/dev/null; }
+verde_io_bajo() { presion 0 0 8000 10; "$aqui/semaforo.sh"; }
+sin_io_no_bloquea() { presion 0 0 8000; "$aqui/semaforo.sh"; }
+prueba "semáforo en rojo por presión de disco" rojo_io
+prueba "semáforo en verde con poco disco" verde_io_bajo
+prueba "sin /proc/pressure/io no se mira el disco" sin_io_no_bloquea
 prueba "semáforo en rojo por presión de memoria" rojo_memoria
 prueba "semáforo en rojo con poca memoria disponible" rojo_disponible
 prueba "en el umbral exacto sigue en verde" en_el_limite_es_verde

@@ -17,7 +17,7 @@ Las de cualquier sistema de sesiones de agentes con API. Con Claude Code en remo
 | Leer qué dijo al acabar su turno | `list_events` con `kinds: ["result"]` y un `limit` bajo |
 | Darle una orden o reanudarlo | `send_message` |
 | Retirarlo tras su relevo | `archive_session` |
-| Despertarse cada hora | una tarea programada recurrente (no avisos sueltos encadenados) |
+| Despertarse cada hora | una tarea programada recurrente (no avisos sueltos encadenados), o revisar por eventos: cuando la persona escribe o un trabajador avisa |
 
 ## Reglas que reciben todos los trabajadores
 
@@ -33,6 +33,20 @@ Van en el prompt inicial de cada uno:
    `pesado.sh <etiqueta> -- <orden>`. Lo ligero (tests unitarios, lint) no hace fila.
 5. **Lo que no es tuyo no se decide**: dinero, publicar algo, cuentas, borrar datos de producción.
    No se pregunta y se espera: se apunta en «Lo que espera a la persona» y se sigue con otra cosa.
+6. **Para esperar un build o una prueba larga**, lánzalo en segundo plano con un aviso al acabar
+   (esperar con `grep` sobre su registro, no con `pgrep -f`, que se encuentra a sí mismo) y sigue.
+7. **Lo que solo se ve en el dispositivo real** (un móvil, una tele) no se da por hecho con pruebas
+   en la propia máquina: se apunta como pendiente de comprobar.
+
+### Prompt de un trabajador nuevo
+
+```text
+Sigue con <proyecto>. Lee su CLAUDE.md y «Dónde estamos ahora» en docs/HOJA-DE-RUTA.md.
+Eres trabajador de la jefatura (<id>): los hitos y el relevo se le avisan con send_message,
+nunca solo en la respuesta. Encargo: <qué y por qué>. Lo que dependa de la persona va a
+«Lo que espera a la persona» y sigues con lo demás. Reglas: relevo al ~30 % de contexto; lo
+pesado, por pesado.sh; commit y push al cerrar cada tarea; no le preguntes a la persona.
+```
 
 ## Cada revisión (cada hora)
 
@@ -47,6 +61,23 @@ Van en el prompt inicial de cada uno:
 5. **La máquina**: `pesado/semaforo.sh --ver`. En rojo, ver quién tiene la fila (`*.quien`) y, si
    alguien lanza trabajo pesado fuera de ella, pararlo.
 6. **Una línea en el registro** de `JEFATURA.md`. A la persona, solo dos resúmenes al día.
+7. **Cerrar lo terminado**: archivar a los trabajadores tras su relevo (cada chat vivo ocupa memoria
+   en la máquina), y actualizar la plantilla de chats y el mapa de proyectos. **Nunca** archivar
+   un chat que abrió la persona: «para los chats» es interrumpir, no archivar.
+
+## Limpieza de chats (de vez en cuando)
+
+Desarchivar una sesión no relanza su proceso: puede quedarse en la lista como «trabajando» sin
+nada detrás. Para limpiar, inventario completo: por cada sesión sin archivar, leer su último
+resultado, comprobar que lo pendiente está escrito en la hoja de ruta de su proyecto (si no, se
+escribe o se termina), y solo entonces archivarla. Las de la persona, con su permiso.
+
+## El relevo de la propia jefatura
+
+La jefatura escribe en `JEFATURA.md` un «Estado para la jefatura siguiente» (trabajadores vivos,
+qué espera cada uno, avisos) y crea la siguiente. Las sesiones creadas por sesiones tienen una
+**profundidad máxima**: cuando el linaje llega al tope, la jefatura deja el estado escrito y le
+pide a la persona que abra la siguiente a mano con «sigue con la jefatura».
 
 ## Por qué así (lo que enseñó cada fallo)
 

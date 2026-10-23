@@ -1,0 +1,9 @@
+{
+  "_leeme": "Quién es quién entre los chats vivos. Lo mantiene la jefatura (alta, relevo y archivo). Solo identidad: el estado en vivo (trabajando, esperando, terminado) se saca aparte de los procesos y de la API de sesiones, nunca del contenido de las conversaciones.",
+  "actualizado": "2026-01-01T09:00:00+01:00",
+  "chats": [
+    {"sesion": "<id>", "nombre": "Jefatura 3", "rol": "jefatura", "proyecto": "jefatura", "depende_de": null},
+    {"sesion": "<id>", "nombre": "Web · rediseño", "rol": "trabajador", "proyecto": "web", "depende_de": "<id de la jefatura>"},
+    {"sesion": "<id>", "nombre": "Chat de la persona", "rol": "persona", "proyecto": "carrera", "depende_de": null}
+  ]
+}
